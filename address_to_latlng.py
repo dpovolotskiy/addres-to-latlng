@@ -1,28 +1,32 @@
 import time
-from tqdm import tqdm
 import geocoder
-import json
 import argparse
+
+from progressbar import *
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--input", help="Path to input file (full or relative)", default="input.txt")
-parser.add_argument("-o", "--output", help="Path to output file (full or relative). Must be JSON file.",
-                    default="output.json")
+parser.add_argument("-o", "--output", help="Path to output file (full or relative).", default="output.txt")
 args = parser.parse_args()
 
+
+sys.stderr = open('nul', "w")
 address_list = []
 with open(str(args.input), encoding="utf-8") as address_data:
     for address in address_data:
         address_list.append(address.rstrip())
 
-coordinates = {}
-for i in tqdm(range(len(address_list))):
+open(str(args.output), 'w').close()
+output = open(str(args.output), "a", encoding="utf-8")
+
+for i in range(len(address_list)):
+    progress(i, len(address_list), status='Processing')
     response = geocoder.yandex(address_list[i])
     while not response.ok:
         time.sleep(600)
         response = geocoder.yandex(address_list[i])
-    coordinates[address_list[i]] = response.latlng
+    output.write("{}: POINT ({} {})\n".format(address_list[i], response.lng, response.lat))
+    output.flush()
 
-with open(str(args.output), "w", encoding="utf-8") as output:
-    output.write(json.dumps(coordinates, ensure_ascii=False, indent=4))
+output.close()
