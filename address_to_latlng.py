@@ -1,3 +1,5 @@
+import time
+from tqdm import tqdm
 import geocoder
 import json
 import argparse
@@ -9,16 +11,18 @@ parser.add_argument("-o", "--output", help="Path to output file (full or relativ
                     default="output.json")
 args = parser.parse_args()
 
-geo_list = []
-with open(str(args.input), encoding="utf-8") as geo_data:
-    for line in geo_data:
-        geo_list.append(line.rstrip())
+address_list = []
+with open(str(args.input), encoding="utf-8") as address_data:
+    for address in address_data:
+        address_list.append(address.rstrip())
 
-result = {}
-for address in geo_list:
-    g = geocoder.yandex(address)
-    result[address] = g.latlng
+coordinates = {}
+for i in tqdm(range(len(address_list))):
+    response = geocoder.yandex(address_list[i])
+    while not response.ok:
+        time.sleep(600)
+        response = geocoder.yandex(address_list[i])
+    coordinates[address_list[i]] = response.latlng
+
 with open(str(args.output), "w", encoding="utf-8") as output:
-    output.write(json.dumps(result, ensure_ascii=False, indent=4))
-
-print("Works done!")
+    output.write(json.dumps(coordinates, ensure_ascii=False, indent=4))
