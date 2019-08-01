@@ -23,7 +23,7 @@ output = open(str(args.output), "a", encoding="utf-8")
 for i in range(len(address_list)):
     progress(i, len(address_list), status='Processing')
     response = geocoder.yandex(address_list[i])
-    while not response.ok:
+    while response.status_code != 200:
         time.sleep(600)
         response = geocoder.yandex(address_list[i])
     output.write("{}: POINT ({} {})\n".format(address_list[i], response.lng, response.lat))
